@@ -6,7 +6,7 @@ TFT_eSPI tft = TFT_eSPI();
 
 #define SAMPLES         1024          // Must be a power of 2
 // #define SAMPLING_FREQ   4096         // Hz, must be 40000 or less due to ADC conversion time. Determines maximum frequency that can be analysed by the FFT Fmax=sampleF/2.
-#define SAMPLING_FREQ   1024         // Hz, must be 40000 or less due to ADC conversion time. Determines maximum frequency that can be analysed by the FFT Fmax=sampleF/2.
+#define SAMPLING_FREQ   8192         // Hz, must be 40000 or less due to ADC conversion time. Determines maximum frequency that can be analysed by the FFT Fmax=sampleF/2.
 #define AMPLITUDE       1000          // Depending on your audio source level, you may need to alter this value. Can be used as a 'sensitivity' control.
 #define AUDIO_IN_PIN    32            // Signal in on this pin
 #define NOISE           500           // Used as a crude noise filter, values below this are ignored
@@ -37,22 +37,11 @@ void setup() {
   tft.fillScreen(TFT_BLACK);
   tft.setTextSize(2);
 
-  tft.setCursor(10, 225);  tft.println("0");
-  tft.setCursor(50, 225);  tft.println("0.17");
-  tft.setCursor(130, 225);  tft.println("0.34");
-  tft.setCursor(220, 225);  tft.println("1");
-  // tft.setCursor(10, 225);  tft.println("0");
-  // tft.setCursor(50, 225);  tft.println("0.68");
-  // tft.setCursor(150, 225);  tft.println("1.4");
-  // tft.setCursor(220, 225);  tft.println("2");
-
-  tft.drawLine(0,220,240,220,TFT_WHITE);
-  tft.drawLine(80,220, 80,215,TFT_WHITE);
-  tft.drawLine(160,220, 160,215,TFT_WHITE);
   
+  int factor = 16;
   sampling_period_us = round(1000000 * (1.0 / SAMPLING_FREQ));
   
-  countSamples = SAMPLES / 2;             // реальное количество частот
+  countSamples = SAMPLES / factor;             // реальное количество частот
   bandSamples = countSamples / NUM_BANDS; // целое значение количества семплов в графическом столбце.
   countSamples = bandSamples * NUM_BANDS; // приведенное к целому отображаемое количество частот (кратно количеству графических столбцов)
   // последний семпл соответствует частоте FREQ_MAX = (SAMPLING_FREQ / 2), Гц 
@@ -60,11 +49,20 @@ void setup() {
   // каждая графическая полоса содержит частотную полосу шириной ONE_BAND_FREQ = ONE_SAMPLE_FREQ * bandSamples, Гц
   // значит значение START_FQ будет находится в полосе №: START_BAND = START_FQ / ONE_BAND_FREQ;
   // а значение FINISH_FQ - в полосе №: FINISH_BAND = FINISH_FQ / ONE_BAND_FREQ;
-  int freqMax = SAMPLING_FREQ / 2;
+  int freqMax = SAMPLING_FREQ / factor;
   int oneSampleFreq = freqMax / countSamples;
   int oneBandFreq = oneSampleFreq * bandSamples;
   startBand = START_FQ / oneBandFreq;
   finishBand = FINISH_FQ / oneBandFreq;
+
+  tft.setCursor(10, 225);  tft.println(0);
+  tft.setCursor(50, 225);  tft.println((float)freqMax/3000);
+  tft.setCursor(130, 225);  tft.println((float)freqMax/1500);
+  tft.setCursor(200, 225);  tft.println((float)freqMax/1000);
+
+  tft.drawLine(0,220,240,220,TFT_WHITE);
+  tft.drawLine(80,220, 80,215,TFT_WHITE);
+  tft.drawLine(160,220, 160,215,TFT_WHITE);
   tft.fillRect(startBand * 4, 0, (finishBand - startBand) * 4 , 200 ,TFT_DARKGREY);
 }
 
